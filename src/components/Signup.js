@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../firebase'; // Assuming your initialization is in firebase.js
+import { auth } from '../firebase'; 
+import { getFirestore, collection, doc, setDoc } from 'firebase/firestore'; 
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 
-
 function Signup() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,9 +21,14 @@ function Signup() {
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigate('/login');// Successful signup - redirect to login
-     } catch (error) {
+        const { user } = await createUserWithEmailAndPassword(auth, email, password);
+        const db = getFirestore(); // Initialize Firestore instance
+        await setDoc(doc(collection(db, 'users'), user.uid), {
+          name,
+          email,
+        });
+      navigate('/login'); // Redirect to dashboard after signup
+    } catch (error) {
       setErrorMessage('Signup failed: ' + error.message); 
     }
   };
@@ -33,10 +39,20 @@ function Signup() {
       {errorMessage && <p className="error-message">{errorMessage}</p>} 
       <form onSubmit={handleSubmit} className="signup-form">
         <div className="form-group">
+          <label htmlFor="name">Name:</label>
+          <input 
+            type="text"
+            id="name" 
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-group">
           <label htmlFor="email">Email:</label>
           <input 
             type="email"
-            id="email" // Add an ID for better label association
+            id="email" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
