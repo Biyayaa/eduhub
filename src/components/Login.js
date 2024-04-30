@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase'; // Assuming your initialization is in firebase.js
-import { signInWithEmailAndPassword } from 'firebase/auth';
-
+import { signInWithEmailAndPassword} from 'firebase/auth';
+import { getFirestore, getDoc, doc } from 'firebase/firestore';
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,11 +14,26 @@ function Login() {
     setErrorMessage('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard'); // Redirect to dashboard after login
-    } catch (error) {
-      setErrorMessage('Login failed: ' + error.message); 
-    }
+        const { user } = await signInWithEmailAndPassword(auth, email, password);
+        const db = getFirestore();
+        const userRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userRef);
+  
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          if (userData.role === 'student') {
+            navigate('/studentdashboard'); 
+          } else if (userData.role === 'lecturer') {
+            navigate('/lecturerdashboard'); 
+          } else {
+            setErrorMessage('User role not found');
+          }
+        } else {
+          setErrorMessage('User not found');
+        }
+      } catch (error) {
+        setErrorMessage('Login failed: ' + error.message);
+      }
   };
 
   return (
