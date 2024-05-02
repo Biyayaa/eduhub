@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'; 
-import { getFirestore, collection, addDoc, doc, updateDoc, arrayUnion, getDoc, getDocs, query, where } from "firebase/firestore";
+import { getFirestore, collection, addDoc,  getDocs } from "firebase/firestore";
 import "./MaterialUploadModal.css";
 
 
