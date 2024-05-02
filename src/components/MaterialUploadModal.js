@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'; 
-import { getFirestore, collection, addDoc,  getDocs } from "firebase/firestore";
+import { getFirestore, collection, doc, addDoc,  getDocs } from "firebase/firestore";
 import "./MaterialUploadModal.css";
 
 
@@ -35,8 +35,9 @@ function MaterialUploadModal({ isOpen, onClose, courseId }) {
       const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
     
       // Update Firestore with the download URL
-      const db = getFirestore();
-      const courseMaterialsRef = collection(db, `courses/${courseId}/course_materials`);
+const db = getFirestore();
+const courseRef = doc(db, `courses/${courseId}`); // Reference to the course document
+const courseMaterialsRef = collection(courseRef, 'course_materials');
       
       // Add the material to the "course materials" subcollection
       await addDoc(courseMaterialsRef, {

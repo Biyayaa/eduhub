@@ -5,17 +5,18 @@ import { getFirestore, doc, getDoc, collection, getDocs } from 'firebase/firesto
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 function StudentDashboard() {
-    const [user, setUser] = useState(null); 
+    const [user, setUser] = useState(null);
     const [availableCourses, setAvailableCourses] = useState([]); 
     const [isLoading, setIsLoading] = useState(false); 
     const navigate = useNavigate();
 
+    // Authentication state management
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
                     const db = getFirestore();
-                    const userRef = doc(db, 'users', user.uid); 
+                    const userRef = doc(db, 'users', user.uid);
                     const docSnap = await getDoc(userRef);
 
                     if (docSnap.exists()) {
@@ -35,38 +36,45 @@ function StudentDashboard() {
         return unsubscribe; 
     }, [navigate]); 
 
+    // Fetch courses with nested materials
     useEffect(() => { 
-      const fetchCourses = async () => { 
-          setIsLoading(true);
-  
-          try {
-              const db = getFirestore();
-  
-              // Collection of all courses (nested within user documents)
-              const courses = await getDocs(collection(db, `users`)); 
-  
-              const allCourses = await Promise.all(
-                  courses.docs.map(async (userDoc) => {
-                      const userCoursesRef = collection(userDoc.ref, 'courses');
-                      const userCoursesSnapshot = await getDocs(userCoursesRef);
-  
-                      return userCoursesSnapshot.docs.map((courseDoc) => ({
-                          id: courseDoc.id,
-                          ...courseDoc.data(),
-                      }));
-                  })
-              );
-  
-              setAvailableCourses(allCourses.flat()); // Flatten nested arrays
-          } catch (error) {
-              console.error("Error fetching courses:", error);
-          } finally {
-              setIsLoading(false); 
-          }
-      };
-  
-      fetchCourses(); 
-  }, []); 
+        const fetchCourses = async () => { 
+            setIsLoading(true);
+
+            try {
+                const db = getFirestore();
+                const courses = await getDocs(collection(db, `users`)); // Fetch all user documents
+
+                const allCourses = await Promise.all(
+                    courses.docs.map(async (userDoc) => {
+                        const userCoursesRef = collection(userDoc.ref, 'courses');
+                        const userCoursesSnapshot = await getDocs(userCoursesRef);
+
+                        return await Promise.all( // Fetch materials for each course
+                            userCoursesSnapshot.docs.map(async (courseDoc) => {
+                                const courseMaterialsRef = collection(courseDoc.ref, 'course_materials');
+                                const courseMaterialsSnapshot = await getDocs(courseMaterialsRef);
+
+                                return {
+                                    id: courseDoc.id,
+                                    ...courseDoc.data(),
+                                    materials: courseMaterialsSnapshot.docs.map(materialDoc => materialDoc.data())
+                                };
+                            })
+                        );
+                    })
+                );
+
+                setAvailableCourses(allCourses.flat()); // Flatten nested arrays
+            } catch (error) {
+                console.error("Error fetching courses:", error);
+            } finally {
+                setIsLoading(false); 
+            }
+        };
+
+        fetchCourses(); 
+    }, []); 
 
     const handleLogout = async () => {
         try {
@@ -91,7 +99,21 @@ function StudentDashboard() {
                             <li key={course.id}>
                                 <h3>{course.name}</h3>
                                 <p>{course.description}</p>
-                                {/* Add buttons for enrollment or viewing details here */} 
+
+                                {course.materials.length > 0 ? (
+                                    <>
+                                        <h4>Course Materials:</h4>
+                                        <ul>
+                                            {course.materials.map(material => (
+                                                <li key={material.name}>
+                                                    <a href={material.downloadURL} target="_blank" rel="noopener noreferrer">{material.name}</a>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </>
+                                ) : (
+                                    <p>No materials available for this course</p>
+                                )}
                             </li>
                         ))}
                     </ul>
