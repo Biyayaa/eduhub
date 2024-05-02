@@ -100,6 +100,7 @@ function LecturerDashboard() {
   };
 
   const handleCourseClick = (courseId) => {
+    console.log(courseId);
     setCurrentCourseId(courseId);
     setIsOpen(true);
   };
@@ -138,20 +139,23 @@ function LecturerDashboard() {
       {isLoading ? (
         <p>Loading...</p>
       ) : (
-        <ul>
+        
+          <ul>
           {courses.map((course) => (
             <li key={course.id} onClick={() => handleCourseClick(course.id)}>
               {course.name}
             </li>
           ))}
         </ul>
+    
+        
       )}
       <button onClick={handleLogout}>Log Out</button>
       {isOpen && (
         <MaterialUploadModal
           isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          courseId={currentCourseId}
+          onClose={() => setIsOpen(false)} // Close the modal
+          courseId={currentCourseId} // Pass the current courseId to the modal
         />
       )}
     </div>
