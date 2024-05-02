@@ -5,7 +5,7 @@ import { getFirestore } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, doc, getDoc } from 'firebase/firestore'; 
 
-function Dashboard() {
+function StudentDashboard() {
   const [user, setUser] = useState(null); 
   const navigate = useNavigate();
 
@@ -49,4 +49,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default StudentDashboard;
